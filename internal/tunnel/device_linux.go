@@ -41,7 +41,7 @@ func Start(interfaceName, stateDir, network string, listenPort int) (net.IP, fun
 	link, err := netlink.LinkByName(interfaceName)
 	created := false
 	if err != nil {
-		if !errors.Is(err, netlink.LinkNotFoundError{}) {
+		if !isLinkNotFound(err) {
 			return nil, nil, fmt.Errorf("find WireGuard interface: %w", err)
 		}
 		link = &netlink.GenericLink{
@@ -131,6 +131,11 @@ func Start(interfaceName, stateDir, network string, listenPort int) (net.IP, fun
 		return netlink.LinkDel(link)
 	}
 	return gatewayIP, cleanup, nil
+}
+
+func isLinkNotFound(err error) bool {
+	var notFound netlink.LinkNotFoundError
+	return errors.As(err, &notFound)
 }
 
 func Reload(interfaceName, stateDir, network string) error {
